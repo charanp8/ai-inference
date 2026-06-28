@@ -15,9 +15,29 @@ module pe (
     output logic [31:0] partial_sum_out
 );
 
-    // TODO: Stage 1 - Multiply
-    
+    logic [15:0] temp;
 
-    // TODO: Stage 2 - Accumulate
+    always @(posedge clk) begin
+
+        weight_out <= weight_in;
+
+        if (flush_accum == 1'b1) begin
+
+            partial_sum_out <= 32'd0;
+
+        end
+
+        else begin
+
+            // TODO: Stage 1 - Multiply
+            temp <= weight_in * activation_in;
+
+            // TODO: Stage 2 - Accumulate
+            partial_sum_out <= {16'd0, temp} + partial_sum_in;
+
+        end
+
+    end
+
 
 endmodule
