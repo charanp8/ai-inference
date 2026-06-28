@@ -1,0 +1,6 @@
+obj_dir/
+sim
+*.o
+*.a
+*.vcd
+.DS_Store
