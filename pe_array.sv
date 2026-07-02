@@ -18,12 +18,14 @@ module pe_array (
     // TODO: Create internal signals for weight, activation, and partial sum flow
     logic [7:0] weight_vert [0:4][0:3];
     logic [7:0] activation_horiz [0:3][0:4];
-    logic [31:0] partial_horiz [0:3][0:4];
+    wire [31:0] partial_horiz [0:3][0:4];
 
     //start the inputs
-    assign weight_vert[0] = weight_in;
-    assign activation_horiz[0] = activation_in;
-    assign partial_horiz[0] = '{default: 32'd0};
+    for (genvar c = 0; c < 4; c++) begin
+        assign weight_vert[0][c] = weight_in[c];
+        assign activation_horiz[0][c] = activation_in[c];
+        assign partial_horiz[0][c] = 32'd0;
+    end
 
     // TODO: Instantiate 4x4 grid of PEs using generate blocks
     genvar i, j;
@@ -45,6 +47,12 @@ module pe_array (
             end
         end
     endgenerate
+
+    for (genvar row = 0; row < 4; row++) begin
+        for (genvar col = 0; col < 4; col++) begin
+            assign partial_sum_out[row][col] = partial_horiz[row][col+1];
+        end
+    end
 
 
 endmodule
