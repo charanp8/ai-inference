@@ -11,48 +11,71 @@ module pe_array (
     // Activation inputs from left (flowing right each row)
     input logic [7:0] activation_in [0:3],
 
-    // Partial sum outputs to right (flowing right each row)
-    output logic [31:0] partial_sum_out [0:3][0:3]
+    // Partial sum outputs (one per PE, row x col)
+    output wire [31:0] partial_sum_out [0:3][0:3]
 );
 
-    // TODO: Create internal signals for weight, activation, and partial sum flow
-    logic [7:0] weight_vert [0:4][0:3];
-    logic [7:0] activation_horiz [0:3][0:4];
-    wire [31:0] partial_horiz [0:3][0:4];
+    // Internal flow signals — all wire so module outputs can drive them cleanly
+    wire [7:0]  weight_vert     [0:4][0:3];   // [level][col]  weights flowing down
+    wire [7:0]  activation_horiz[0:3][0:4];   // [row][level]  activations flowing right
+    wire [31:0] partial_horiz   [0:3][0:4];   // [row][level]  partial sums flowing right
 
-    //start the inputs
-    for (genvar c = 0; c < 4; c++) begin
-        assign weight_vert[0][c] = weight_in[c];
-        assign activation_horiz[0][c] = activation_in[c];
-        assign partial_horiz[0][c] = 32'd0;
-    end
+    // Edge inputs: tie level-0 of each flow array to the module inputs
+    assign weight_vert[0][0] = weight_in[0];
+    assign weight_vert[0][1] = weight_in[1];
+    assign weight_vert[0][2] = weight_in[2];
+    assign weight_vert[0][3] = weight_in[3];
 
-    // TODO: Instantiate 4x4 grid of PEs using generate blocks
+    assign activation_horiz[0][0] = activation_in[0];
+    assign activation_horiz[1][0] = activation_in[1];
+    assign activation_horiz[2][0] = activation_in[2];
+    assign activation_horiz[3][0] = activation_in[3];
+
+    assign partial_horiz[0][0] = 32'd0;
+    assign partial_horiz[1][0] = 32'd0;
+    assign partial_horiz[2][0] = 32'd0;
+    assign partial_horiz[3][0] = 32'd0;
+
+    // 4x4 PE grid
     genvar i, j;
-
     generate
-        for (i = 0; i < 4; i++) begin : row
-            for (j = 0; j < 4; j++) begin : column
-                pe pe_instance (
-                    .clk(clk),
-                    .rst(rst),
-                    .weight_down(weight_vert[i][j]), //weight flowing down
-                    .weight_down_out(weight_vert[i+1][j]), //weight flowing down
-                    .activation_in(activation_horiz[i][j]),
-                    .partial_sum_in(partial_horiz[i][j]),
-                    .partial_sum_out(partial_horiz[i][j+1]), //flows across columns
-                    .load_weight(load_weight),
-                    .flush_accum(flush_accum)
+        for (i = 0; i < 4; i++) begin : gen_row
+            for (j = 0; j < 4; j++) begin : gen_col
+                pe pe_inst (
+                    .clk            (clk),
+                    .rst            (rst),
+                    .load_weight    (load_weight),
+                    .flush_accum    (flush_accum),
+                    .weight_down    (weight_vert[i][j]),
+                    .weight_down_out(weight_vert[i+1][j]),
+                    .activation_in  (activation_horiz[i][j]),
+                    .activation_out (activation_horiz[i][j+1]),
+                    .partial_sum_in (partial_horiz[i][j]),
+                    .partial_sum_out(partial_horiz[i][j+1])
                 );
             end
         end
     endgenerate
 
-    for (genvar row = 0; row < 4; row++) begin
-        for (genvar col = 0; col < 4; col++) begin
-            assign partial_sum_out[row][col] = partial_horiz[row][col+1];
-        end
-    end
+    // Output: last level of partial_horiz for each PE
+    assign partial_sum_out[0][0] = partial_horiz[0][1];
+    assign partial_sum_out[0][1] = partial_horiz[0][2];
+    assign partial_sum_out[0][2] = partial_horiz[0][3];
+    assign partial_sum_out[0][3] = partial_horiz[0][4];
 
+    assign partial_sum_out[1][0] = partial_horiz[1][1];
+    assign partial_sum_out[1][1] = partial_horiz[1][2];
+    assign partial_sum_out[1][2] = partial_horiz[1][3];
+    assign partial_sum_out[1][3] = partial_horiz[1][4];
+
+    assign partial_sum_out[2][0] = partial_horiz[2][1];
+    assign partial_sum_out[2][1] = partial_horiz[2][2];
+    assign partial_sum_out[2][2] = partial_horiz[2][3];
+    assign partial_sum_out[2][3] = partial_horiz[2][4];
+
+    assign partial_sum_out[3][0] = partial_horiz[3][1];
+    assign partial_sum_out[3][1] = partial_horiz[3][2];
+    assign partial_sum_out[3][2] = partial_horiz[3][3];
+    assign partial_sum_out[3][3] = partial_horiz[3][4];
 
 endmodule

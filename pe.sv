@@ -1,18 +1,17 @@
 // Processing Element (PE) for 8-bit Systolic Array
 // Atomic Semi 100nm process
-// TODO: Fill in ports and logic
 
 module pe (
     input logic clk,
     input logic rst,
     input logic load_weight,
-    input logic [7:0] weight_in,
     input logic [7:0] weight_down,
     input logic [7:0] activation_in,
     input logic [31:0] partial_sum_in,
     input logic flush_accum,
 
     output logic [7:0] weight_down_out,
+    output logic [7:0] activation_out,
     output logic [31:0] partial_sum_out
 );
 
@@ -25,10 +24,12 @@ module pe (
             stored_weight <= 8'd0;
             mult_stage1 <= 16'd0;
             partial_sum_out <= 32'd0;
+            activation_out <= 8'd0;
         end
         else begin
-            // Pass weight down to next PE
+            // Pass weight down and activation right to next PEs
             weight_down_out <= weight_down;
+            activation_out <= activation_in;
 
             if (load_weight == 1'b1) begin
                 // Weight loading phase: capture weight from above

@@ -7,7 +7,7 @@ module pe_array_tb;
     logic flush_accum;
     logic [7:0] weight_in [0:3];
     logic [7:0] activation_in [0:3];
-    logic [31:0] partial_sum_out [0:3][0:3];
+    wire  [31:0] partial_sum_out [0:3][0:3];
 
     pe_array dut (
         .clk(clk),
@@ -19,83 +19,59 @@ module pe_array_tb;
         .partial_sum_out(partial_sum_out)
     );
 
-    logic [7:0] weight_values [0:3];
-    integer cycle;
+    // Free-running clock
+    initial clk = 0;
+    always #5 clk = ~clk;
 
     initial begin
-        // TODO: Initialize signals
-        clk = 0;
+        // Initialize
         rst = 1;
         load_weight = 0;
         flush_accum = 0;
+        weight_in[0] = 0; weight_in[1] = 0; weight_in[2] = 0; weight_in[3] = 0;
+        activation_in[0] = 0; activation_in[1] = 0;
+        activation_in[2] = 0; activation_in[3] = 0;
 
-        weight_in[0] = 0;
-        weight_in[1] = 0;
-        weight_in[2] = 0;
-        weight_in[3] = 0;
-        activation_in[0] = 0;
-        activation_in[1] = 0;
-        activation_in[2] = 0;
-        activation_in[3] = 0;
-
-        weight_values[0] = 8'd10;
-        weight_values[1] = 8'd20;
-        weight_values[2] = 8'd30;
-        weight_values[3] = 8'd40;
-
-        // TODO: Reset
-        for (cycle = 0; cycle < 2; cycle++) begin //hold reset for 2 cycles
-            #1 clk = ~clk;
-        end
-
+        // Reset for 2 cycles
+        @(posedge clk); @(posedge clk);
         rst = 0;
 
-        // TODO: Load weights (4 cycles)
+        // Load weights — shift [10,20,30,40] down one row per cycle
         load_weight = 1;
+        weight_in[0] = 8'd10; weight_in[1] = 8'd10;
+        weight_in[2] = 8'd10; weight_in[3] = 8'd10;
+        @(posedge clk);  // row 0 gets weight 10
 
-        
-        for (cycle = 0; cycle < 4; cycle++) begin
-            weight_in[0] = weight_values[cycle];
-            weight_in[1] = weight_values[cycle];
-            weight_in[2] = weight_values[cycle];
-            weight_in[3] = weight_values[cycle];
-            #1 clk = ~clk;
-        end
+        weight_in[0] = 8'd20; weight_in[1] = 8'd20;
+        weight_in[2] = 8'd20; weight_in[3] = 8'd20;
+        @(posedge clk);  // row 1 gets weight 10, row 0 gets 20
 
-        // TODO: Stream activations and compute
+        weight_in[0] = 8'd30; weight_in[1] = 8'd30;
+        weight_in[2] = 8'd30; weight_in[3] = 8'd30;
+        @(posedge clk);  // row 2 gets 10, row 1 gets 20, row 0 gets 30
+
+        weight_in[0] = 8'd40; weight_in[1] = 8'd40;
+        weight_in[2] = 8'd40; weight_in[3] = 8'd40;
+        @(posedge clk);  // row 3 gets 10, row 2 gets 20, row 1 gets 30, row 0 gets 40
+
+        // Switch to compute phase
         load_weight = 0;
+        weight_in[0] = 0; weight_in[1] = 0;
+        weight_in[2] = 0; weight_in[3] = 0;
 
-        for (cycle = 0; cycle < 20; cycle++) begin
-            activation_in[0] = 8'd5;
-            activation_in[1] = 8'd5;
-            activation_in[2] = 8'd5;
-            activation_in[3] = 8'd5;
-            #1 clk = ~clk;
-        end
+        // Stream activations
+        activation_in[0] = 8'd5; activation_in[1] = 8'd5;
+        activation_in[2] = 8'd5; activation_in[3] = 8'd5;
 
-        activation_in[0] = 8'd0;
-        activation_in[1] = 8'd0;
-        activation_in[2] = 8'd0;
-        activation_in[3] = 8'd0;
+        // Wait enough cycles for pipeline to fill: 4 cols + 2 pipeline stages
+        repeat (10) @(posedge clk);
 
-        activation_in[0] = 8'd0;
-        activation_in[1] = 8'd0;
-        activation_in[2] = 8'd0;
-        activation_in[3] = 8'd0;
-
-        #10;
-        // TODO: Print results
-        $display("\n=== Results ===");
-        $display("PE[0][0]: %d (expected: 50)", partial_sum_out[0][0]);
-        $display("PE[0][1]: %d (expected: 100)", partial_sum_out[0][1]);
-        $display("PE[0][2]: %d (expected: 150)", partial_sum_out[0][2]);
-        $display("PE[0][3]: %d (expected: 200)", partial_sum_out[0][3]);
-
-        $display("\n=== Checking intermediate signals ===");
-        $display("All row 0 PE outputs:");
-        for (cycle = 0; cycle < 4; cycle++) begin
-            $display("  [0][%d]: %d", cycle, partial_sum_out[0][cycle]);
-        end
+        #1;
+        $display("=== Row 0 results (weight=40, act=5: PE[0][0]=200, accumulates by 200 per column) ===");
+        $display("PE[0][0]: %d", partial_sum_out[0][0]);
+        $display("PE[0][1]: %d", partial_sum_out[0][1]);
+        $display("PE[0][2]: %d", partial_sum_out[0][2]);
+        $display("PE[0][3]: %d", partial_sum_out[0][3]);
 
         $finish;
     end
