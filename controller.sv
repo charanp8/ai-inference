@@ -13,7 +13,7 @@ parameter COMPUTE = 2'd2;
 parameter DONE = 2'd3;
 
 logic [1:0] state;
-logic [2:0] counter;
+logic [3:0] counter;
 
 always@(posedge clk) begin
     
@@ -33,23 +33,24 @@ always@(posedge clk) begin
                 load_weight <= 0;
                 if (start == 1) begin
                     state <= LOAD_WEIGHT;
-                    counter <= 3'd0;
+                    counter <= 4'd0;
                 end
             end
             LOAD_WEIGHT: begin
                 load_weight <= 1;
                 counter <= counter + 1;
-                if (counter == 3'd4) begin
+                if (counter == 4'd4) begin
                     state <= COMPUTE;
-                    counter <= 3'd0;
+                    counter <= 4'd0;
+                    load_weight <= 0;
                 end
             end
             COMPUTE: begin
                 load_weight <= 0;
                 counter <= counter + 1;
-                if (counter == 3'd9) begin
+                if (counter == 4'd9) begin
                     state <= DONE;
-                    counter <= 3'd0;
+                    counter <= 4'd0;
                 end
             end
             DONE: begin

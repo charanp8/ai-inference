@@ -1,21 +1,41 @@
-module pe_array_tb;
+module controller_tb;
 
     logic clk;
     logic rst;
+    logic start;
     logic load_weight;
     logic flush_accum;
-    logic [7:0] weight_in [0:3];
-    logic [7:0] activation_in [0:3];
-    wire  [31:0] partial_sum_out [0:3][0:3];
+    logic done;
 
-    pe_array dut (
+    controller dut (
         .clk(clk),
         .rst(rst),
+        .start(start),
         .load_weight(load_weight),
         .flush_accum(flush_accum),
-        .weight_in(weight_in),
-        .activation_in(activation_in),
-        .partial_sum_out(partial_sum_out)
+        .done(done)
     );
+
+    // have the clock running
+    initial clk = 0;
+    always #5 clk = ~clk;
+
+    initial begin
+        $monitor("t=%0t state=%0d load_weight=%b done=%b counter=%0d", $time, dut.state, load_weight, done, dut.counter);
+
+        start = 0;
+        rst = 1;
+        repeat(2) @(posedge clk);
+        rst = 0;
+
+        #5;
+
+        start = 1;
+        repeat(20) @(posedge clk);
+
+        
+        
+        $finish;
+    end
 
 endmodule
