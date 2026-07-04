@@ -45,14 +45,16 @@ always@(posedge clk) begin
                     state <= COMPUTE;
                     counter <= 4'd0;
                     load_weight <= 0;
-                    flush_accum <= 1;
                 end
             end
             COMPUTE: begin
                 load_weight <= 0;
-                flush_accum <= 0;
                 counter <= counter + 1;
-                if (counter == 4'd9) begin
+                if (counter == 4'd0)
+                    flush_accum <= 1;
+                else
+                    flush_accum <= 0;
+                if (counter == 4'd5) begin
                     state <= DONE;
                     counter <= 4'd0;
                 end
@@ -65,9 +67,5 @@ always@(posedge clk) begin
         endcase
     end
 end
-        
-
-
-
 
 endmodule
