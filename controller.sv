@@ -22,6 +22,7 @@ always@(posedge clk) begin
         counter <= 0;
         done <= 0;
         load_weight <= 0;
+        flush_accum <= 0;
     end
 
     else begin
@@ -31,6 +32,7 @@ always@(posedge clk) begin
             IDLE: begin
                 done <= 0;
                 load_weight <= 0;
+                flush_accum <= 0;
                 if (start == 1) begin
                     state <= LOAD_WEIGHT;
                     counter <= 4'd0;
@@ -43,10 +45,12 @@ always@(posedge clk) begin
                     state <= COMPUTE;
                     counter <= 4'd0;
                     load_weight <= 0;
+                    flush_accum <= 1;
                 end
             end
             COMPUTE: begin
                 load_weight <= 0;
+                flush_accum <= 0;
                 counter <= counter + 1;
                 if (counter == 4'd9) begin
                     state <= DONE;
