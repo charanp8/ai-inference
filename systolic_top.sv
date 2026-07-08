@@ -3,6 +3,9 @@ module systolic_top (
     input logic rst,
     input logic start,
     input logic [7:0] weight_in [0:3],
+    input logic wr_en,
+    input logic [3:0] wr_addr,
+    input logic [7:0] wr_data [0:3],
     output wire [31:0] partial_sum_out [0:3][0:3],
     output logic done
 );
@@ -36,6 +39,9 @@ module systolic_top (
         .clk(clk),
         .rst(rst),
         .rd_en(rd_en),
+        .wr_en(wr_en),
+        .wr_addr(wr_addr),
+        .wr_data(wr_data),
         .data_out(activation_in)
     );
 
