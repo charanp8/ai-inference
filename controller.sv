@@ -2,6 +2,7 @@ module controller (
     input  logic clk,
     input  logic rst,
     input  logic start,
+    output logic rd_en,
     output logic load_weight,
     output logic flush_accum,
     output logic done
@@ -19,6 +20,7 @@ always@(posedge clk) begin
     
     if (rst == 1) begin
         state <= IDLE;
+        rd_en <= 0;
         counter <= 0;
         done <= 0;
         load_weight <= 0;
@@ -30,6 +32,7 @@ always@(posedge clk) begin
         case(state)
 
             IDLE: begin
+                rd_en <= 0;
                 done <= 0;
                 load_weight <= 0;
                 flush_accum <= 0;
@@ -39,6 +42,7 @@ always@(posedge clk) begin
                 end
             end
             LOAD_WEIGHT: begin
+                rd_en <= 0;
                 load_weight <= 1;
                 counter <= counter + 1;
                 if (counter == 4'd4) begin
@@ -48,6 +52,7 @@ always@(posedge clk) begin
                 end
             end
             COMPUTE: begin
+                rd_en <= 1;
                 load_weight <= 0;
                 counter <= counter + 1;
                 if (counter == 4'd0)
@@ -60,6 +65,7 @@ always@(posedge clk) begin
                 end
             end
             DONE: begin
+                rd_en <= 0;
                 done <= 1;
                 state <= IDLE;
             end
