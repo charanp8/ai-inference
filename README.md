@@ -5,26 +5,26 @@ Single PE:
 2-stage pipeline
 Weight storage with load_weight control
 Systolic dataflow (weights down, activations/partials right)
-4×4 Array:
 
-16 PEs in a 2D grid
-Can compute a 4×4 matrix multiply in parallel
+8×8 Array:
+
+64 PEs in a 2D grid
+Each row streams its own weight + activation, accumulates across columns
 All PEs clock together (synchronous)
 
 CONTROLLER SEQUENCING:
 
-Phase 1 (4 cycles): load_weight=1, feed weight_in[0:3] per cycle, weights propagate down
-Phase 2 (6+ cycles): load_weight=0, flush_accum=0, stream activation_in[0:3] per cycle
-Phase 3: Read partial_sum_out from rightmost column (4 × 32-bit per cycle)
+start must be pulsed for 1 cycle (not held high)
+Phase 1 (9 cycles): load_weight=1 for cycles 1-8, feed weight_in[0:7] per cycle, weights propagate down
+Phase 2 (11 cycles): flush_accum=1 on first cycle, then stream activation_in[0:7] per cycle
+Phase 3: partial_sum_out (8×8 × 32-bit) is live the whole time, no separate read phase
 
 I/O:
 
-64-bit in (8-bit values)
-128-bit out OR pack into 64-bit over 2 cycles (decide later)
-Valid/ready handshake 
+8×8-bit in (weight_in, wr_data)
+8×8×32-bit out (partial_sum_out)
+No valid/ready handshake, just a done flag
 
 SRAM:
 
-256KB single-port
-64-bit data bus
-Simple read/write interface (address, data, write_enable, read_enable)
+will be 256kb
