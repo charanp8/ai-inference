@@ -2,18 +2,18 @@ module systolic_top (
     input logic clk,
     input logic rst,
     input logic start,
-    input logic [7:0] weight_in [0:3],
+    input logic [7:0] weight_in [0:7],
     input logic wr_en,
     input logic [3:0] wr_addr,
-    input logic [7:0] wr_data [0:3],
-    output wire [31:0] partial_sum_out [0:3][0:3],
+    input logic [7:0] wr_data [0:7],
+    output wire [31:0] partial_sum_out [0:7][0:7],
     output logic done
 );
 
     logic load_weight;
     logic flush_accum;
     logic rd_en;
-    wire [7:0] activation_in [0:3];
+    wire [7:0] activation_in [0:7];
 
     controller ctrl_inst (
         .clk(clk),

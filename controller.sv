@@ -14,10 +14,10 @@ parameter COMPUTE = 2'd2;
 parameter DONE = 2'd3;
 
 logic [1:0] state;
-logic [3:0] counter;
+logic [4:0] counter;
 
 always@(posedge clk) begin
-    
+
     if (rst == 1) begin
         state <= IDLE;
         rd_en <= 0;
@@ -38,16 +38,16 @@ always@(posedge clk) begin
                 flush_accum <= 0;
                 if (start == 1) begin
                     state <= LOAD_WEIGHT;
-                    counter <= 4'd0;
+                    counter <= 0;
                 end
             end
             LOAD_WEIGHT: begin
                 rd_en <= 0;
                 load_weight <= 1;
                 counter <= counter + 1;
-                if (counter == 4'd4) begin
+                if (counter == 5'd8) begin
                     state <= COMPUTE;
-                    counter <= 4'd0;
+                    counter <= 0;
                     load_weight <= 0;
                 end
             end
@@ -55,13 +55,13 @@ always@(posedge clk) begin
                 rd_en <= 1;
                 load_weight <= 0;
                 counter <= counter + 1;
-                if (counter == 4'd0)
+                if (counter == 5'd0)
                     flush_accum <= 1;
                 else
                     flush_accum <= 0;
-                if (counter == 4'd5) begin
+                if (counter == 5'd10) begin
                     state <= DONE;
-                    counter <= 4'd0;
+                    counter <= 0;
                 end
             end
             DONE: begin
